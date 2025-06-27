@@ -18,39 +18,90 @@ function App() {
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
+  const [userAnswer, setUserAnswer] = useState('');
+  const [isCorrect, setIsCorrect] = useState(null);
 
   const handleFlip = () => {
     setIsFlipped(!isFlipped);
   };
 
+  const handleSubmit = () => {
+    checkAnswer();
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSubmit();
+    }
+  };
+
+  const handlePrevious = () => {
+    setIsFlipped(false);
+    setUserAnswer('');
+    setIsCorrect(null);
+    setCurrentIndex(currentIndex === 0 ? cards.length - 1 : currentIndex - 1);
+  };
+
   const handleNext = () => {
-    setIsFlipped(false); // Flip back to the front first
-    setTimeout(() => {
-        const randomIndex = Math.floor(Math.random() * cards.length);
-        setCurrentIndex(randomIndex); // Update the index after the flip animation
-    }, 600); // Match the CSS transition duration (0.6s)
+    setIsFlipped(false);
+    setUserAnswer('');
+    setIsCorrect(null);
+    setCurrentIndex((currentIndex + 1) % cards.length);
+  };
+
+  const checkAnswer = () => {
+    const correctAnswer = cards[currentIndex].answer.toLowerCase();
+    const userGuess = userAnswer.toLowerCase();
+    // Fuzzy matching - checks if user's answer contains key parts of correct answer
+    const isMatch = correctAnswer.includes(userGuess) || userGuess.includes(correctAnswer);
+    setIsCorrect(isMatch);
   };
 
   return (
     <div className="flashcards-container">
       <h1>Muslim Flash Cards</h1>
       {cards.length > 0 ? (
-        <div className={`flashcard ${isFlipped ? 'flipped' : ''}`} onClick={handleFlip}>
-          <div className="card-content">
-            <div className="front">
-              {cards[currentIndex].question}
-            </div>
-            <div className="back">
-              {cards[currentIndex].answer}
+        <>
+          <div className={`flashcard ${isFlipped ? 'flipped' : ''}`} onClick={handleFlip}>
+            <div className="card-content">
+              <div className="front">
+                <div>{cards[currentIndex].question}</div>
+                <input
+                  type="text"
+                  value={userAnswer}
+                  onChange={(e) => setUserAnswer(e.target.value)}
+                  placeholder="Enter your answer"
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyPress={handleKeyPress}
+                />
+                <button 
+                  className="submit-button" 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSubmit();
+                  }}
+                >
+                  Submit
+                </button>
+                {isCorrect !== null && (
+                  <div className={`feedback ${isCorrect ? 'correct' : 'incorrect'}`}>
+                    {isCorrect ? '✓ Correct!' : '✗ Try again'}
+                  </div>
+                )}
+              </div>
+              <div className="back">
+                {cards[currentIndex].answer}
+              </div>
             </div>
           </div>
-        </div>
+          <div className="controls">
+            <button onClick={handlePrevious}>Previous</button>
+            <button onClick={handleNext}>Next</button>
+          </div>
+        </>
       ) : (
         <div className="no-cards">No flashcards available</div>
       )}
-      <div className="controls">
-        <button onClick={handleNext}>Next</button>
-      </div>
     </div>
   );
 }
